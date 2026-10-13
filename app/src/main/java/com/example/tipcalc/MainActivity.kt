@@ -36,6 +36,7 @@ class MainActivity : ComponentActivity() {
 fun TipCalcScreen(modifier: Modifier = Modifier) {
     var orderAmount by rememberSaveable { mutableStateOf("") }
     var dishCount by rememberSaveable { mutableStateOf("") }
+    var tipPercent by rememberSaveable { mutableStateOf(0f) }
 
     Column(
         modifier = modifier.padding(16.dp),
@@ -79,6 +80,23 @@ fun TipCalcScreen(modifier: Modifier = Modifier) {
                     keyboardType = KeyboardType.Number
                 )
             )
+        }
+
+        Text(text = "Чаевые: ${tipPercent.toInt()}%")
+
+        Slider(
+            value = tipPercent,
+            onValueChange = { tipPercent = it },
+            valueRange = 0f..25f,
+            steps = 4
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("0%")
+            Text("25%")
         }
     }
 }
