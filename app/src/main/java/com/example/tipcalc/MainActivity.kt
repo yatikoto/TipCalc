@@ -44,6 +44,10 @@ fun TipCalcScreen(modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     var snackbarJob by remember { mutableStateOf<Job?>(null) }
 
+    val discountPercent = calculateDiscountPercent(
+        dishCount.toIntOrNull() ?: 0
+    )
+
     Box(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = modifier.padding(16.dp),
@@ -129,6 +133,26 @@ fun TipCalcScreen(modifier: Modifier = Modifier) {
                 Text("0%")
                 Text("25%")
             }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "Скидка:")
+
+                listOf(3, 5, 7, 10).forEach { percent ->
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        RadioButton(
+                            selected = discountPercent == percent,
+                            onClick = null
+                        )
+                        Text(text = "$percent%")
+                    }
+                }
+            }
         }
         SnackbarHost(
             hostState = snackbarHostState,
@@ -147,4 +171,14 @@ fun TipCalcPreview() {
 
 fun calculateTip(orderAmount: Double, tipPercent: Int): Double {
     return orderAmount * tipPercent / 100.0
+}
+
+fun calculateDiscountPercent(dishCount: Int): Int {
+    return when {
+        dishCount in 1..2 -> 3
+        dishCount in 3..5 -> 5
+        dishCount in 6..10 -> 7
+        dishCount > 10 -> 10
+        else -> 0
+    }
 }
