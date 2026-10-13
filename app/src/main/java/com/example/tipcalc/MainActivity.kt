@@ -43,6 +43,8 @@ fun TipCalcScreen(modifier: Modifier = Modifier) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var snackbarJob by remember { mutableStateOf<Job?>(null) }
+    var showTotal by rememberSaveable { mutableStateOf(false) }
+
 
     val discountPercent = calculateDiscountPercent(
         dishCount.toIntOrNull() ?: 0
@@ -163,15 +165,36 @@ fun TipCalcScreen(modifier: Modifier = Modifier) {
                 }
             }
 
-            Text(text = "Сумма скидки:")
+            Text(if (showTotal) "Итоговая сумма:" else "Сумма скидки:")
 
             TextField(
-                value = "%.2f".format(discountAmount),
+                value = "%.2f".format(
+                    if (showTotal) {
+                        calculateTotal(
+                            orderAmount = amount ?: 0.0,
+                            discountPercent = discountPercent,
+                            tipPercent = tipPercent.toInt()
+                        )
+                    } else {
+                        discountAmount
+                    }
+                ),
                 onValueChange = {},
                 readOnly = true,
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
+
+            Button(
+                onClick = { showTotal = true },
+                enabled = amount != null &&
+                        amount.isFinite() &&
+                        amount > 0 &&
+                        (dishCount.toIntOrNull() ?: 0) > 0,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Итого")
+            }
 
         }
         SnackbarHost(
@@ -205,4 +228,14 @@ fun calculateDiscountPercent(dishCount: Int): Int {
 
 fun calculateDiscount(orderAmount: Double, discountPercent: Int): Double {
     return orderAmount * discountPercent / 100.0
+}
+
+fun calculateTotal(
+    orderAmount: Double,
+    discountPercent: Int,
+    tipPercent: Int
+): Double {
+    val discount = calculateDiscount(orderAmount, discountPercent)
+    val tip = calculateTip(orderAmount, tipPercent)
+    return orderAmount - discount + tip
 }
