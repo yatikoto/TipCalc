@@ -48,6 +48,15 @@ fun TipCalcScreen(modifier: Modifier = Modifier) {
         dishCount.toIntOrNull() ?: 0
     )
 
+    val amount = orderAmount.replace(',', '.').toDoubleOrNull()
+    val discountAmount = if (
+        amount != null && amount.isFinite() && amount >= 0
+    ) {
+        calculateDiscount(amount, discountPercent)
+    } else {
+        0.0
+    }
+
     Box(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = modifier.padding(16.dp),
@@ -153,6 +162,17 @@ fun TipCalcScreen(modifier: Modifier = Modifier) {
                     }
                 }
             }
+
+            Text(text = "Сумма скидки:")
+
+            TextField(
+                value = "%.2f".format(discountAmount),
+                onValueChange = {},
+                readOnly = true,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
         }
         SnackbarHost(
             hostState = snackbarHostState,
@@ -181,4 +201,8 @@ fun calculateDiscountPercent(dishCount: Int): Int {
         dishCount > 10 -> 10
         else -> 0
     }
+}
+
+fun calculateDiscount(orderAmount: Double, discountPercent: Int): Double {
+    return orderAmount * discountPercent / 100.0
 }
