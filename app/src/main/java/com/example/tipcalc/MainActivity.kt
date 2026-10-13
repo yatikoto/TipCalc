@@ -108,3 +108,7 @@ fun TipCalcPreview() {
         TipCalcScreen()
     }
 }
+
+fun calculateTip(orderAmount: Double, tipPercent: Int): Double {
+    return orderAmount * tipPercent / 100.0
+}
