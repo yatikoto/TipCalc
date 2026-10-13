@@ -73,7 +73,10 @@ fun TipCalcScreen(modifier: Modifier = Modifier) {
                 )
                 TextField(
                     value = orderAmount,
-                    onValueChange = { orderAmount = it },
+                    onValueChange = {
+                        orderAmount = it
+                        showTotal = false
+                    },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
@@ -94,6 +97,7 @@ fun TipCalcScreen(modifier: Modifier = Modifier) {
                     onValueChange = { value ->
                         if (value.all { it in '0'..'9' }) {
                             dishCount = value
+                            showTotal = false
                         }
                     },
                     modifier = Modifier.weight(1f),
@@ -113,6 +117,7 @@ fun TipCalcScreen(modifier: Modifier = Modifier) {
 
                     if (newPercent != tipPercent.toInt()) {
                         tipPercent = newPercent.toFloat()
+                        showTotal = false
 
                         val amount = orderAmount
                             .replace(',', '.')
