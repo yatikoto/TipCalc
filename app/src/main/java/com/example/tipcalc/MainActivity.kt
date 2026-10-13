@@ -1,5 +1,8 @@
 package com.example.tipcalc
 
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -37,67 +40,100 @@ fun TipCalcScreen(modifier: Modifier = Modifier) {
     var orderAmount by rememberSaveable { mutableStateOf("") }
     var dishCount by rememberSaveable { mutableStateOf("") }
     var tipPercent by rememberSaveable { mutableStateOf(0f) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    var snackbarJob by remember { mutableStateOf<Job?>(null) }
 
-    Column(
-        modifier = modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Сумма заказа:",
-                modifier = Modifier.width(140.dp)
-            )
-            TextField(
-                value = orderAmount,
-                onValueChange = { orderAmount = it },
-                modifier = Modifier.weight(1f),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Decimal
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Сумма заказа:",
+                    modifier = Modifier.width(140.dp)
                 )
-            )
-        }
+                TextField(
+                    value = orderAmount,
+                    onValueChange = { orderAmount = it },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal
+                    )
+                )
+            }
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Количество блюд:",
-                modifier = Modifier.width(140.dp)
-            )
-            TextField(
-                value = dishCount,
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Количество блюд:",
+                    modifier = Modifier.width(140.dp)
+                )
+                TextField(
+                    value = dishCount,
+                    onValueChange = { value ->
+                        if (value.all { it in '0'..'9' }) {
+                            dishCount = value
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    )
+                )
+            }
+
+            Text(text = "Чаевые: ${tipPercent.toInt()}%")
+
+            Slider(
+                value = tipPercent,
                 onValueChange = { value ->
-                    if (value.all { it in '0'..'9' }) {
-                        dishCount = value
+                    val newPercent = (value / 5f).roundToInt() * 5
+
+                    if (newPercent != tipPercent.toInt()) {
+                        tipPercent = newPercent.toFloat()
+
+                        val amount = orderAmount
+                            .replace(',', '.')
+                            .toDoubleOrNull()
+
+                        snackbarJob?.cancel()
+                        snackbarJob = scope.launch {
+                            val message = if (
+                                amount != null && amount.isFinite() && amount >= 0
+                            ) {
+                                val tip = calculateTip(amount, newPercent)
+                                "Сумма чаевых: %.2f".format(tip)
+                            } else {
+                                "Введите корректную сумму заказа"
+                            }
+
+                            snackbarHostState.showSnackbar(message)
+                        }
                     }
                 },
-                modifier = Modifier.weight(1f),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number
-                )
+                valueRange = 0f..25f,
+                steps = 4
             )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("0%")
+                Text("25%")
+            }
         }
-
-        Text(text = "Чаевые: ${tipPercent.toInt()}%")
-
-        Slider(
-            value = tipPercent,
-            onValueChange = { tipPercent = it },
-            valueRange = 0f..25f,
-            steps = 4
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
         )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("0%")
-            Text("25%")
-        }
     }
 }
 
